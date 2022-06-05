@@ -41,11 +41,19 @@ class TriviaTestCase(unittest.TestCase):
     def test_get_paginated_questions(self):
         res = self.client().get("/questions")
         data = json.loads(res.data)
-
+        # success
+        # ': True,
+        # 'questions': current_questions,
+        # 'totalQuestions': len(selection),
+        # 'categories': formatted_categories,
+        # 'currentCategory': None,
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
-        self.assertTrue(data["total_questions"])
+        self.assertTrue(data["totalQuestions"])
         self.assertTrue(len(data["questions"]))
+        self.assertTrue(len(data["categories"]))
+        self.assertIsNone(data["currentCategory"])
+
 
     #Endpoint: `/questions?page=num`, Method: GET
     def test_404_sent_requesting_beyond_valid_page(self):

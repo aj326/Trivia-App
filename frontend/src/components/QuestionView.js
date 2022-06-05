@@ -26,6 +26,7 @@ class QuestionView extends Component {
       type: 'GET',
       success: (result) => {
         this.setState({
+          success: result.success,
           questions: result.questions,
           totalQuestions: result.total_questions,
           categories: result.categories,

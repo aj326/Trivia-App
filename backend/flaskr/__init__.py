@@ -66,10 +66,11 @@ def create_app(test_config=None):
         # print([category.format() for category in Category.query.all()])
         return jsonify(
             {
+                'success': True,
                 'questions': current_questions,
                 'totalQuestions': len(selection),
                 'categories': formatted_categories,
-                'currentCategory': [],
+                'currentCategory': None,
             }
         )
 
