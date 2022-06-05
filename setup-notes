@@ -1,0 +1,3 @@
+downgraded:
+    Python to 3.9 to fix testers
+    Node to nvm install 16.13.0 to stand up frontend
