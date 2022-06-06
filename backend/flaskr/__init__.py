@@ -46,20 +46,32 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
+    @DONE:
     Create an endpoint to handle GET requests
     for all available categories.
     """
+    """
+    @DONE:
+    Create an endpoint to handle GET requests for questions,
+    including pagination (every 10 questions).
+    This endpoint should return a list of questions,
+    number of total questions, current category, categories.
+
+    TEST: At this point, when you start the application
+    you should see questions and categories generated,
+    ten questions per page and pagination at the bottom of the screen for three pages.
+    Clicking on the page numbers should update the questions.
+    """
+
     # @app.route("/")
-    @app.route("/questions")
-    # @app.route("/questions/")
+    @app.route("/questions", methods=["GET"])
     def retrieve_questions():
         selection = Question.query.order_by(Question.id).all()
 
-        #using the method .format on a Category instance lead to errors ...
-        formatted_categories ={cat.id: cat.type for cat in Category.query.all()}
-        #page number is handled in the flask request global variable
-        #see paginate_questions
+        # using the method .format on a Category instance lead to errors ...
+        formatted_categories = {cat.id: cat.type for cat in Category.query.all()}
+        # page number is handled in the flask request global variable
+        # see paginate_questions
         current_questions = paginate_questions(request, selection)
 
         if len(current_questions) == 0:
@@ -75,7 +87,6 @@ def create_app(test_config=None):
             }
         )
 
-
     @app.route("/categories")
     def retrieve_categories():
         return jsonify({'success': True,
@@ -83,42 +94,21 @@ def create_app(test_config=None):
 
     @app.route("/categories/<id>")
     def retrieve_categories_bad_request(id):
-            abort(422)
+        abort(422)
 
     @app.route("/categories/<int:cat_id>/questions")
     def retrieve_questions_for_category(cat_id):
         if Category.query.get(cat_id) is None:
             abort(404)
         questions = Question.query.filter_by(category=cat_id).all()
-        # print(category.type, questions)
-        # success: true,
-        # questions: result.questions,
-        # totalQuestions: result.total_questions,
-        # currentCategory: result.current_category,
         return jsonify({
-            'success':True,
-            'questions':[q.format() for q in questions],
-            'totalQuestions':len(questions),
+            'success': True,
+            'questions': [q.format() for q in questions],
+            'totalQuestions': len(questions),
             'currentCategory': Category.query.get(cat_id).type
         }
 
         )
-
-
-
-
-    """
-    @TODO:
-    Create an endpoint to handle GET requests for questions,
-    including pagination (every 10 questions).
-    This endpoint should return a list of questions,
-    number of total questions, current category, categories.
-
-    TEST: At this point, when you start the application
-    you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
-    Clicking on the page numbers should update the questions.
-    """
 
     """
     @TODO:
@@ -129,7 +119,7 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
+    @DONE:
     Create an endpoint to POST a new question,
     which will require the question and answer text,
     category, and difficulty score.
@@ -139,8 +129,44 @@ def create_app(test_config=None):
     of the questions list in the "List" tab.
     """
 
+    @app.route("/questions", methods=["POST"])
+    def post_question():
+        body = request.get_json()
+        new_question = body.get("question", None)
+        new_answer = body.get("answer", None)
+        new_difficulty = body.get("difficulty", None)
+        new_category = body.get("category", None)
+        searchTerm = body.get("searchTerm", None)
+
+        if searchTerm:
+            selection = Question.query.order_by(Question.id).filter(
+                Question.question.ilike("%{}%".format(searchTerm))
+            )
+            matching_questions = paginate_questions(request, selection)
+            return jsonify({
+                'success': True,
+                'questions': matching_questions,
+                'totalQuestions': len(selection.all()),
+                'currentCategory': None,
+            })
+        elif new_question and new_answer and new_difficulty and new_category:
+            question = Question(question=new_question, category=new_category, answer=new_answer,
+                                difficulty=new_difficulty)
+            question.insert()
+            return jsonify(
+                {
+                    'success': True,
+                    'question': new_question,
+                    'answer': new_answer,
+                    'difficulty': new_difficulty,
+                    'category': new_category
+                }
+            )
+        else:
+            abort(422)
+
     """
-    @TODO:
+    @DONE:
     Create a POST endpoint to get questions based on a search term.
     It should return any questions for whom the search term
     is a substring of the question.
@@ -151,7 +177,7 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
+    @DONE:
     Create a GET endpoint to get questions based on category.
 
     TEST: In the "List" tab / main screen, clicking on one of the
@@ -179,8 +205,8 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def resource_not_found(e):
-        return jsonify({'success':False,
-                        'message':'Resource not found'}), 404
+        return jsonify({'success': False,
+                        'message': 'Resource not found'}), 404
 
     @app.errorhandler(422)
     def unprocessable_entity(e):

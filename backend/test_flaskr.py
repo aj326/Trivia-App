@@ -18,6 +18,15 @@ class TriviaTestCase(unittest.TestCase):
         self.database_path = "postgresql://{}/{}".format('postgres:abc@localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
+        self.new_question = {"question":"TEST What color is the sky?",
+                             "answer":"TEST blue",
+                             "difficulty":1,
+                             "category":1}
+        self.new_bad_question = {"question": "TEST What color is the sky?",
+                             "difficulty": 1,
+                             "category": 1}
+
+
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -33,8 +42,7 @@ class TriviaTestCase(unittest.TestCase):
     TODO
     Write at least one test for each test for successful operation and for expected errors.
     """
-    def test_me(self):
-        self.assertTrue(True)
+
 
     #GET, Questions
     #Endpoint: '/questions[?pages=num]', Method: GET
@@ -57,8 +65,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "Resource not found")
     #GET, Categories:
-
-
     # Endpoint: '/categories', Method: GET
     def test_get_categories(self):
         res = self.client().get("/categories",follow_redirects=True)
@@ -83,16 +89,45 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data["questions"]))
         self.assertTrue(data["totalQuestions"])
         self.assertTrue(data["currentCategory"])
-
     def test_get_questions_for_invalid_category(self):
         res = self.client().get("/categories/100000/questions",follow_redirects=True)
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "Resource not found")
+    #POST, Questions:
+    def test_post_new_question(self):
+        res = self.client().post("/questions",follow_redirects=True,json=self.new_question)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["success"], True)
+        self.assertTrue(data["question"])
+        self.assertTrue(data["answer"])
+        self.assertTrue(data["difficulty"])
+        self.assertTrue(data["category"])
+    def test_422_post_new_question_not_allowed(self):
+        res = self.client().post("/questions",follow_redirects=True,json=self.new_bad_question)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["message"], "Unprocessable Entity")
+    def test_search_for_questions(self):
+        res = self.client().post("/questions",follow_redirects=True,json={"searchTerm":"Title"})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(data['success'])
+        self.assertTrue(len(data['questions']))
+        self.assertTrue(data['totalQuestions'])
+        self.assertIsNone(data['currentCategory'])
+    def test_search_for_questions_returns_no_quetions(self):
+        res = self.client().post("/questions",follow_redirects=True,json={"searchTerm":"Title0000000000000"})
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code,200)
+        self.assertTrue(data['success'])
+        self.assertFalse(len(data['questions']))
+        self.assertFalse(data['totalQuestions'])
+        self.assertIsNone(data['currentCategory'])
 
-
-        # / categories /${id} / questions
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
