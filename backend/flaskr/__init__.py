@@ -99,7 +99,7 @@ def create_app(test_config=None):
             'success':True,
             'questions':[q.format() for q in questions],
             'totalQuestions':len(questions),
-            'currentCategory': Category.query.get(cat_id)
+            'currentCategory': Category.query.get(cat_id).type
         }
 
         )
