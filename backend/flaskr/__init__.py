@@ -50,8 +50,9 @@ def create_app(test_config=None):
     Create an endpoint to handle GET requests
     for all available categories.
     """
-
+    # @app.route("/")
     @app.route("/questions")
+    # @app.route("/questions/")
     def retrieve_questions():
         selection = Question.query.order_by(Question.id).all()
 
@@ -73,6 +74,38 @@ def create_app(test_config=None):
                 'currentCategory': None,
             }
         )
+
+
+    @app.route("/categories")
+    def retrieve_categories():
+        return jsonify({'success': True,
+                        'categories': {cat.id: cat.type for cat in Category.query.all()}})
+
+    @app.route("/categories/<id>")
+    def retrieve_categories_bad_request(id):
+            abort(422)
+
+    @app.route("/categories/<int:cat_id>/questions")
+    def retrieve_questions_for_category(cat_id):
+        if Category.query.get(cat_id) is None:
+            abort(404)
+        questions = Question.query.filter_by(category=cat_id).all()
+        # print(category.type, questions)
+        # success: true,
+        # questions: result.questions,
+        # totalQuestions: result.total_questions,
+        # currentCategory: result.current_category,
+        return jsonify({
+            'success':True,
+            'questions':[q.format() for q in questions],
+            'totalQuestions':len(questions),
+            'currentCategory': Category.query.get(cat_id)
+        }
+
+        )
+
+
+
 
     """
     @TODO:
@@ -143,5 +176,15 @@ def create_app(test_config=None):
     Create error handlers for all expected errors
     including 404 and 422.
     """
+
+    @app.errorhandler(404)
+    def resource_not_found(e):
+        return jsonify({'success':False,
+                        'message':'Resource not found'}), 404
+
+    @app.errorhandler(422)
+    def unprocessable_entity(e):
+        return jsonify({'success': False,
+                        'message': 'Unprocessable Entity'}), 422
 
     return app

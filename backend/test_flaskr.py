@@ -36,17 +36,11 @@ class TriviaTestCase(unittest.TestCase):
     def test_me(self):
         self.assertTrue(True)
 
-    #GET:
-    #Endpoint: `/questions`, Method: GET
+    #GET, Questions
+    #Endpoint: '/questions[?pages=num]', Method: GET
     def test_get_paginated_questions(self):
-        res = self.client().get("/questions")
+        res = self.client().get("/questions",follow_redirects=True)
         data = json.loads(res.data)
-        # success
-        # ': True,
-        # 'questions': current_questions,
-        # 'totalQuestions': len(selection),
-        # 'categories': formatted_categories,
-        # 'currentCategory': None,
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
         self.assertTrue(data["totalQuestions"])
@@ -57,12 +51,47 @@ class TriviaTestCase(unittest.TestCase):
 
     #Endpoint: `/questions?page=num`, Method: GET
     def test_404_sent_requesting_beyond_valid_page(self):
-        res = self.client().get("/questions?page=1000")
+        res = self.client().get("/questions?page=1000",follow_redirects=True)
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data["success"], False)
-        self.assertEqual(data["message"], "resource not found")
+        self.assertEqual(data["message"], "Resource not found")
+    #GET, Categories:
 
+
+    # Endpoint: '/categories', Method: GET
+    def test_get_categories(self):
+        res = self.client().get("/categories",follow_redirects=True)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["success"], True)
+        self.assertTrue(data["categories"])
+
+    #Endpoint: '/categories/{id}', Method: GET
+    def test_get_category(self):
+        res=self.client().get("/categories/5",follow_redirects=True)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data["success"], False)
+
+    def test_get_questions_for_category(self):
+        res = self.client().get("/categories/1/questions",follow_redirects=True)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data["success"], True)
+        self.assertTrue(len(data["questions"]))
+        self.assertTrue(data["totalQuestions"])
+        self.assertTrue(data["currentCategory"])
+
+    def test_get_questions_for_invalid_category(self):
+        res = self.client().get("/categories/100000/questions",follow_redirects=True)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["message"], "Resource not found")
+
+
+        # / categories /${id} / questions
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
