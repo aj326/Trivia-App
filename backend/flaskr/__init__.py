@@ -24,7 +24,7 @@ def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # CORS Headers
     @app.after_request
@@ -64,8 +64,9 @@ def create_app(test_config=None):
     """
 
     # @app.route("/")
-    @app.route("/questions", methods=["GET"])
+    @app.route("/questions/")
     def retrieve_questions():
+        print("in /questions, GET")
         selection = Question.query.order_by(Question.id).all()
 
         # using the method .format on a Category instance lead to errors ...
@@ -118,6 +119,25 @@ def create_app(test_config=None):
     This removal will persist in the database and when you refresh the page.
     """
 
+    @app.route("/questions/<int:id>",methods=["DELETE"])
+    def delete_question(id):
+        question = Question.query.get(id)
+        if question is None:
+            abort(404)
+        try:
+            question.delete()
+            updated_questions = Question.query.all()
+            return jsonify({
+            'success': True,
+            'questions': paginate_questions(request, updated_questions),
+            'totalQuestions': len(updated_questions),
+            'categories': {cat.id: cat.type for cat in Category.query.all()},
+            'currentCategory': None,
+            }
+            )
+        except:
+            abort(422)
+
     """
     @DONE:
     Create an endpoint to POST a new question,
@@ -127,6 +147,16 @@ def create_app(test_config=None):
     TEST: When you submit a question on the "Add" tab,
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
+    """
+    """
+    @DONE:
+    Create a POST endpoint to get questions based on a search term.
+    It should return any questions for whom the search term
+    is a substring of the question.
+
+    TEST: Search by any phrase. The questions list will update to include
+    only question that include that string within their question.
+    Try using the word "title" to start.
     """
 
     @app.route("/questions", methods=["POST"])
@@ -167,17 +197,6 @@ def create_app(test_config=None):
 
     """
     @DONE:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
-
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    """
-
-    """
-    @DONE:
     Create a GET endpoint to get questions based on category.
 
     TEST: In the "List" tab / main screen, clicking on one of the
@@ -196,6 +215,29 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+
+    @app.route("/quizzes", methods=["POST"])
+    def post_quiz():
+        body = request.get_json()
+        # As per frontend code, this is an array of question ids
+        previous_questions = body.get("previous_questions", None)
+        # As per frontend code, null maps to all categories
+        quiz_category = body.get("quiz_category", None)
+        if quiz_category['id']:
+            questions_not_already_asked = Question.query.filter(Question.category == quiz_category['id']).filter(
+                ~Question.id.in_(previous_questions)).all()
+        else:
+            questions_not_already_asked = Question.query.filter(~Question.id.in_(previous_questions)).all()
+        print(questions_not_already_asked)
+        if questions_not_already_asked:
+            new_question = random.choice(questions_not_already_asked)
+        else:
+            new_question = None
+        print(new_question.format() if new_question else "No more q")
+        return jsonify({
+            'success': True,
+            'question': new_question.format() if new_question else None
+        })
 
     """
     @TODO:

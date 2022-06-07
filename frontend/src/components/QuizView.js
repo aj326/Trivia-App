@@ -69,6 +69,8 @@ class QuizView extends Component {
           guess: '',
           forceEnd: result.question ? false : true,
         });
+                  // alert(JSON.stringify(this.state.currentQuestion));
+
         return;
       },
       error: (error) => {
