@@ -6,7 +6,7 @@
 
 ### Installing Dependencies
 
-1. **Installing Node and NPM**
+1. **Installing Node and NPM (Node version 16.13.0)**
    This project depends on Nodejs and Node Package Manager (NPM). Before continuing, you must download and install Node (the download includes NPM) from [https://nodejs.com/en/download](https://nodejs.org/en/download/).
 
 2. **Installing project dependencies**

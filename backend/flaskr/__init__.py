@@ -1,9 +1,8 @@
-import os
-from flask import Flask, request, abort, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS
 import random
-# from ..models import setup_db, Question, Category
+
+from flask import Flask, request, abort, jsonify
+from flask_cors import CORS
+import json
 from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
@@ -66,7 +65,7 @@ def create_app(test_config=None):
     # @app.route("/")
     @app.route("/questions/")
     def retrieve_questions():
-        print("in /questions, GET")
+        # print("in /questions, GET")
         selection = Question.query.order_by(Question.id).all()
 
         # using the method .format on a Category instance lead to errors ...
@@ -112,14 +111,14 @@ def create_app(test_config=None):
         )
 
     """
-    @TODO:
+    @DONE:
     Create an endpoint to DELETE question using a question ID.
 
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
 
-    @app.route("/questions/<int:id>",methods=["DELETE"])
+    @app.route("/questions/<int:id>", methods=["DELETE"])
     def delete_question(id):
         question = Question.query.get(id)
         if question is None:
@@ -128,11 +127,11 @@ def create_app(test_config=None):
             question.delete()
             updated_questions = Question.query.all()
             return jsonify({
-            'success': True,
-            'questions': paginate_questions(request, updated_questions),
-            'totalQuestions': len(updated_questions),
-            'categories': {cat.id: cat.type for cat in Category.query.all()},
-            'currentCategory': None,
+                'success': True,
+                'questions': paginate_questions(request, updated_questions),
+                'totalQuestions': len(updated_questions),
+                'categories': {cat.id: cat.type for cat in Category.query.all()},
+                'currentCategory': None,
             }
             )
         except:
@@ -160,7 +159,7 @@ def create_app(test_config=None):
     """
 
     @app.route("/questions", methods=["POST"])
-    def post_question():
+    def post_question_add_and_search():
         body = request.get_json()
         new_question = body.get("question", None)
         new_answer = body.get("answer", None)
@@ -205,7 +204,7 @@ def create_app(test_config=None):
     """
 
     """
-    @TODO:
+    @DONE:
     Create a POST endpoint to get questions to play the quiz.
     This endpoint should take category and previous question parameters
     and return a random questions within the given category,
@@ -228,19 +227,20 @@ def create_app(test_config=None):
                 ~Question.id.in_(previous_questions)).all()
         else:
             questions_not_already_asked = Question.query.filter(~Question.id.in_(previous_questions)).all()
-        print(questions_not_already_asked)
+        # print(questions_not_already_asked)
         if questions_not_already_asked:
             new_question = random.choice(questions_not_already_asked)
         else:
             new_question = None
-        print(new_question.format() if new_question else "No more q")
+        # print(new_question.format() if new_question else "No more q")
+        print(new_question.format())
         return jsonify({
             'success': True,
             'question': new_question.format() if new_question else None
         })
 
     """
-    @TODO:
+    @DONE:
     Create error handlers for all expected errors
     including 404 and 422.
     """
@@ -254,5 +254,14 @@ def create_app(test_config=None):
     def unprocessable_entity(e):
         return jsonify({'success': False,
                         'message': 'Unprocessable Entity'}), 422
+
+    @app.errorhandler(400)
+    def bad_request(e):
+        return jsonify({'success': False,
+                        'message': 'Bad Request'}), 400
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return jsonify({'success': False,
+                        'message': 'Internal Server Error'}), 500
 
     return app
